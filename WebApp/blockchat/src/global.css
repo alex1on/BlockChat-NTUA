@@ -1,0 +1,112 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.NavigationBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 50px;
+  background-color: #1A1A2E;
+  color: #EAEAEA;
+}
+
+.NavigationBar h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #21E6C1;
+}
+
+.links a {
+  color: #ddd;
+  text-decoration: none;
+  margin-left: 20px;
+  font-size: 18px;
+  transition: color 0.3s;
+}
+
+.links a:hover {
+  color: #21E6C1;
+}
+
+.Home {
+  min-height: 100vh;
+  background-image: url('../public/images/background3.png');
+  background-size: cover;
+  background-position: center;
+  color: #f0f0f0;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  background-blend-mode: darken;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 100px;
+}
+
+.Home h1, .Home p {
+  margin: 0 auto;
+  width: fit-content;
+}
+
+.Home h1 {
+  font-size: 3rem;
+  color: #ffffff;
+}
+
+.Home p {
+  font-size: 1.5rem;
+  max-width: 800px;
+  color: #cccccc;
+}
+
+
+.Wallet {
+  min-height: 100vh;
+  background-image: url('../public/images/wallet2.png');
+  background-size: cover;
+  background-position: center;
+  color: #f0f0f0;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  background-blend-mode: darken;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 100px;
+}
+
+.Transaction {
+  min-height: 100vh;
+  background-image: url('../public/images/transaction.png');
+  background-size: cover;
+  background-position: center;
+  color: #f0f0f0;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  background-blend-mode: darken;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 100px;
+}
+
+.History {
+  min-height: 100vh;
+  background-image: url('../public/images/history.png');
+  background-size: cover;
+  background-position: center;
+  color: #f0f0f0;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  background-blend-mode: darken;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 100px;
+}
