@@ -1,5 +1,7 @@
 import React from 'react';
-import '../global.css';
+
+import '../css/global.css';
+import '../css/history.css'
 
 const History = () => {
     return (

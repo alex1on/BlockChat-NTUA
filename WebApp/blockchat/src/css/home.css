@@ -1,0 +1,32 @@
+/* Home page */
+
+.Home {
+    min-height: 100vh;
+    background-image: url('../../public/images/background3.png');
+    background-size: cover;
+    background-position: center;
+    color: #f0f0f0;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    background-blend-mode: darken;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 100px;
+  }
+  
+  .Home h1, .Home p {
+    margin: 0 auto;
+    width: fit-content;
+  }
+  
+  .Home h1 {
+    font-size: 3rem;
+    color: #ffffff;
+  }
+  
+  .Home p {
+    font-size: 1.5rem;
+    max-width: 800px;
+    color: #cccccc;
+  }

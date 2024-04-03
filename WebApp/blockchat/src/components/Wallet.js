@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import '../global.css';
+
+import '../css/global.css';
+import '../css/wallet.css'
 
 const Wallet = () => {
     const [walletInfo, setWalletInfo] = useState({ balance: 0, username: '', public_key: '', private_key: '', nonce: 0 });

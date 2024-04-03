@@ -1,0 +1,16 @@
+/* History page */
+
+.History {
+    min-height: 100vh;
+    background-image: url('../../public/images/history.png');
+    background-size: cover;
+    background-position: center;
+    color: #f0f0f0;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    background-blend-mode: darken;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 100px;
+  }

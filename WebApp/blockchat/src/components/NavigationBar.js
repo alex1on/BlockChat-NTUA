@@ -1,6 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import '../css/navigation_bar.css'
+import '../css/global.css'
+
 const NavigationBar = () => {
     return (
         <nav className='NavigationBar'>

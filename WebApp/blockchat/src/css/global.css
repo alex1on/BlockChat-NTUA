@@ -1,0 +1,21 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+.links a {
+  color: #ddd;
+  text-decoration: none;
+  margin-left: 20px;
+  font-size: 18px;
+  transition: color 0.3s;
+}
+
+.links a:hover {
+  color: #21E6C1;
+}

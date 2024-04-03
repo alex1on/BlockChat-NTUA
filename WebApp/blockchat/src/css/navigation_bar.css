@@ -1,0 +1,16 @@
+/* Navigation Bar */
+
+.NavigationBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    background-color: #1A1A2E;
+    color: #EAEAEA;
+  }
+  
+  .NavigationBar h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #21E6C1;
+  }
