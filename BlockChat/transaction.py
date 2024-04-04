@@ -1,8 +1,6 @@
 import json
 from Crypto.Hash import SHA256
-from Crypto.PublicKey import RSA
 from Crypto.Signature import pss
-# from wallet import generate_wallet
 
 class Transaction:
     """

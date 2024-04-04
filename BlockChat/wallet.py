@@ -1,5 +1,3 @@
-from Crypto.PublicKey import RSA
-
 class Wallet:
     """
     Class that represents a BlockChat Wallet.
@@ -48,14 +46,3 @@ class Wallet:
         print('Transactions: ')
         for transaction in self.transactions:
             transaction.print()
-
-def generate_wallet():
-    """
-    Creates a new wallet.
-    """
-    key = RSA.generate(2048)
-    
-    private_key = key
-    public_key = key.publickey()
-    
-    return Wallet(public_key, private_key)

@@ -1,5 +1,6 @@
-from wallet import *
-from transaction import *
+from Crypto.PublicKey import RSA
+from transaction import Transaction
+from utils import generate_wallet
 
 """
 This scripts is used for testing purposes.
