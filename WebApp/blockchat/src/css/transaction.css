@@ -1,0 +1,125 @@
+/* Transaction page */
+
+.Transaction {
+  min-height: 100vh;
+  background-image: url('../../public/images/transaction.png');
+  background-size: cover;
+  background-position: center;
+  color: #f0f0f0;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  background-blend-mode: darken;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: 0;
+}
+  
+.Transaction h1 {
+  color: #f0f0f0;
+  margin-bottom: 20px;
+}
+
+.Transaction p {
+  margin-bottom: 20px;
+  color: #f0f0f0;
+}
+
+.Transaction button {
+  background-color: #21E6C1;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.Transaction button:hover {
+  background-color: #1A9F8F;
+}
+
+.Transaction button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.Transaction input[type="number"],
+.Transaction input[type="text"],
+.Transaction select {
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 5px;
+  border: 1px solid #21E6C1;
+  width: calc(100% - 22px);
+}
+
+.Transaction select {
+  cursor: pointer;
+}
+
+.Transaction input[type="number"]:focus,
+.Transaction input[type="text"]:focus {
+  outline: none;
+  border-color: #1A9F8F;
+  box-shadow: 0 0 5px rgba(26, 159, 143, 0.5);
+}
+
+.TransactionStep {
+  margin: 20px auto;
+  padding: 20px;
+  border: 2px solid #21E6C1;
+  border-radius: 15px;
+  width: 80%;
+  max-width: 600px;
+  background-color: rgba(51, 51, 51, 0.8);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.NavigationButtons {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.TransactionOptions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.TransactionOptions button {
+  padding: 10px 20px;
+}
+
+.OrSeparator {
+  margin: 0 10px;
+  color: #f0f0f0;
+}
+
+.OptionButton {
+  background-color: #2E3D55;
+  color: #AAAAAA; 
+  opacity: 0.6; 
+}
+
+.OptionButton:hover {
+  background-color: #1A9F8F;
+  opacity: 1;
+}
+
+.Selected {
+  background-color: #17a2b8;
+  color: #ffffff;
+  opacity: 1;
+}
+
+.Selected:hover {
+  background-color: #148c9f;
+}
