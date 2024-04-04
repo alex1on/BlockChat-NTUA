@@ -12,26 +12,28 @@ class Blockchain:
 
     def add_block(self, transactions, validator):
         previous_block = self.chain[-1]
-        new_block = BlockChatCoinBlock(len(self.chain), transactions, validator, previous_block.current_hash)
+        new_block = BlockChatCoinBlock(
+            len(self.chain), transactions, validator, previous_block.hash
+        )
         self.chain.append(new_block)
 
     def is_valid(self):
         for i in range(1, len(self.chain)):
             current_block = self.chain[i]
-            previous_block = self.chain[i-1]
+            previous_block = self.chain[i - 1]
 
-            if current_block.current_hash != current_block.compute_hash():
+            if current_block.hash != current_block.compute_hash():
                 print(f"Current hash {i} does not match the computed hash")
                 return False
 
-            if current_block.previous_hash != previous_block.current_hash:
+            if current_block.previous_hash != previous_block.hash:
                 print(
                     f"Previous block's hash doesn't match with current block's {i} previous hash"
                 )
                 return False
 
         return True
-    
+
     def print_blockchain_contents(self):
         for block in self.chain:
             block.print_self()
