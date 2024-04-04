@@ -30,3 +30,14 @@ class BlockChatCoinBlock:
         print(f"Validator: {self.validator}")
         print(f"Current Hash: {self.hash}")
         print(f"Previous Hash: {self.previous_hash}\n")
+
+    def validate_block(self, prev_block):
+        if self.hash != self.compute_hash():
+            print("Current hash does not match the computed hash")
+            return False
+
+        if self.previous_hash != prev_block.hash:
+            print("Previous block's hash doesn't match with current block's previous hash")
+            return False
+
+        return True

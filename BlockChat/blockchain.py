@@ -17,19 +17,12 @@ class Blockchain:
         )
         self.chain.append(new_block)
 
-    def is_valid(self):
+    def validate_chain(self):
         for i in range(1, len(self.chain)):
             current_block = self.chain[i]
             previous_block = self.chain[i - 1]
 
-            if current_block.hash != current_block.compute_hash():
-                print(f"Current hash {i} does not match the computed hash")
-                return False
-
-            if current_block.previous_hash != previous_block.hash:
-                print(
-                    f"Previous block's hash doesn't match with current block's {i} previous hash"
-                )
+            if not current_block.validate_block(previous_block):
                 return False
 
         return True

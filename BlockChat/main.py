@@ -23,4 +23,4 @@ bcc_blockchain.add_block("50 BCC coins from wallet 1 to wallet 6", selected_vali
 
 bcc_blockchain.print_blockchain_contents()
 
-print("Blockchain is valid:", bcc_blockchain.is_valid())
+print("Blockchain is valid:", bcc_blockchain.validate_chain())
