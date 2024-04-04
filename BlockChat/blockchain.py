@@ -1,14 +1,5 @@
 from block import BlockChatCoinBlock
-from datetime import datetime
 
-def print_block(block):
-        readable_timestamp = datetime.fromtimestamp(block.timestamp).strftime("%Y-%m-%d %H:%M:%S")
-        print(f"Block Index: {block.index}")
-        print(f"Timestamp: {readable_timestamp}")
-        print(f"Transactions: {block.transactions}")
-        print(f"Validator: {block.validator}")
-        print(f"Current Hash: {block.current_hash}")
-        print(f"Previous Hash: {block.previous_hash}\n")
 
 class Blockchain:
     def __init__(self):
@@ -40,3 +31,7 @@ class Blockchain:
                 return False
 
         return True
+    
+    def print_blockchain_contents(self):
+        for block in self.chain:
+            block.print_self()
