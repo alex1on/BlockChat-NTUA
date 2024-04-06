@@ -1,8 +1,6 @@
 import json
 from Crypto.Hash import SHA256
-from Crypto.PublicKey import RSA
 from Crypto.Signature import pss
-# from wallet import generate_wallet
 
 class Transaction:
     """
@@ -17,6 +15,7 @@ class Transaction:
     transaction_id      -> the hash of the transaction
     signature           -> signature of the transaction
     """
+    
     def __init__(self, sender_address, receiver_address, type, nonce, amount=None, message=None, signature=None, transaction_id=None):
         self.sender_address = sender_address.decode()
         self.receiver_address = receiver_address.decode()
@@ -49,9 +48,8 @@ class Transaction:
     def cost(self):
         """
         Calculates the total cost (in BlockChat Coins) of the transaction.
-        TODO: Consider 3% fee
         """
-        return self.amount if self.amount else len(self.message)
+        return self.amount * 1.03 if self.amount else len(self.message)
     
     def sign_transaction(self, private_key):
         """
@@ -72,17 +70,6 @@ class Transaction:
             return True
         except (ValueError, TypeError):
             return False
-        
-    def validate_transaction(self, id):
-        """
-        Validates the transaction by:
-            a) Verifying the signature and
-            b) Check the account balance
-        """
-        self.verify_signature()
-        """
-        TODO: 1) Check the account balance & 2) Check nonce (?)
-        """
         
     def print(self):
         """
