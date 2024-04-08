@@ -5,10 +5,9 @@
         "node": {
             "ip": "ip",
             "port": "port",
-            "public": "port"
+            "public": "public"
         }
     },
-
 
     {
         "type": "init_response",

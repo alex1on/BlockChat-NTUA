@@ -6,7 +6,7 @@ from blockchain import Blockchain
 class BootStrapNode:
     def __init__(self, port, host="localhost"):
         self.blockchain = Blockchain()
-        self.blockchain.print_blockchain_contents()
+        self.blockchain.print()
         self.open_connection(host, port)
         self.server_socket = None
         self.threads = []

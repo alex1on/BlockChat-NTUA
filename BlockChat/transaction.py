@@ -17,8 +17,10 @@ class Transaction:
     """
     
     def __init__(self, sender_address, receiver_address, type, nonce, amount=None, message=None, signature=None, transaction_id=None):
-        self.sender_address = sender_address.decode()
-        self.receiver_address = receiver_address.decode()
+        self.sender_address = sender_address.export_key(format='PEM').decode()
+        self.receiver_address = receiver_address.export_key(format="PEM").decode()
+        # self.sender_address = sender_address
+        # self.receiver_address = receiver_address
         self.type = type
         self.nonce = nonce
         self.amount = amount

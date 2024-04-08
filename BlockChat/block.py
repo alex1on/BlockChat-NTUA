@@ -31,8 +31,8 @@ class BlockChatCoinBlock:
         Generates a SHA-256 hash for the block.
         """
         # exclude hash for validation purposes
-        self_string = json.dumps(
-            {k: v for k, v in self.__dict__.items() if k != "hash"}, sort_keys=True
+        self_string = json.dumps( # TODO: transactions is excludes as it cannot be serialized
+            {k: v for k, v in self.__dict__.items() if k != "hash" and k != "transactions"}, sort_keys=True
         )
         return hashlib.sha256(self_string.encode()).hexdigest()
 

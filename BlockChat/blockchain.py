@@ -10,16 +10,16 @@ class Blockchain:
     chain -> list of blocks
     """
     
-    def __init__(self):
+    def __init__(self, N=5, wallet=None):
         self.chain = []
-        self.create_genesis_block()
+        self.create_genesis_block(N, wallet)
 
     def create_genesis_block(self, N=5, wallet=None):
         """
         Creates the genesis block.
         """
         transaction = Transaction(wallet.public_key, wallet.public_key, 'coins', 0, 1000 * N)
-        genesis_block = BlockChatCoinBlock(0,[transaction], 0, "1")
+        genesis_block = BlockChatCoinBlock(0,[transaction], 0, 1)
         self.chain.append(genesis_block)
 
     def add_block(self, block):
