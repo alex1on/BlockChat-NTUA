@@ -2,7 +2,8 @@ import hashlib
 import time
 import json
 from datetime import datetime
-
+from transaction import Transaction
+from Crypto.PublicKey import RSA
 
 class BlockChatCoinBlock:
     """
@@ -21,7 +22,7 @@ class BlockChatCoinBlock:
         self.index = index
         self.timestamp = time.time()
         self.transactions = transactions
-        self.validator = validator
+        self.validator = validator.export_key(format='PEM').decode() if validator else None
         self.hash = self.compute_hash()
         self.previous_hash = previous_hash
         self.capacity = capacity
@@ -88,6 +89,41 @@ class BlockChatCoinBlock:
             elif transaction.type == 'message':
                 fees += transaction.cost()
         return fees
+    
+    def to_json(self):
+        """
+        Serializes the entire block into a JSON string for Transmission,
+        including the serialization of each transaction within the block
+        """
+        block_dict = {
+            "index": self.index,
+            "timestamp": self.timestamp,
+            "transactions": [json.loads(t.to_json()) for t in self.transactions],
+            "validator": self.validator,
+            "hash": self.hash,
+            "previous_hash": self.previous_hash,
+            "capacity": self.capacity
+        }
+        return json.dumps(block_dict)
+    
+    @staticmethod
+    def from_json(json_str):
+        """
+        Deserializes a JSON string back into a BlockChatCoinBlock object.
+        Also, reconstructs transactions from their JSON representation.
+        """
+        data = json.loads(json_str)
+        transactions = [Transaction.from_json(json.dumps(t)) for t in data["transactions"]]
+        block = BlockChatCoinBlock(
+            index=data["index"],
+            transactions=transactions,
+            previous_hash=data["previous_hash"],
+            capacity=data["capacity"],
+            validator=RSA.import_key(data["validator"].encode()) if data["validator"] else None
+        )
+        block.timestamp = data["timestamp"]
+        block.hash = data["hash"]
+        return block
     
     def print(self):
         """
