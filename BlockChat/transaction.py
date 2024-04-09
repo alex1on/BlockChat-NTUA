@@ -1,6 +1,7 @@
 import json
 from Crypto.Hash import SHA256
 from Crypto.Signature import pss
+from Crypto.PublicKey import RSA
 
 class Transaction:
     """
@@ -40,6 +41,40 @@ class Transaction:
             "nonce": self.nonce
         }
         return json.dumps(transaction_data, sort_keys=True).encode()
+    
+    def to_json(self):
+        """
+        Serializes the entire transaction into a JSON string for transmission.
+        """
+        transaction_dict = {
+            "sender_address": self.sender_address,
+            "receiver_address": self.receiver_address,
+            "type": self.type,
+            "nonce": self.nonce,
+            "amount": self.amount,
+            "message": self.message,
+            "transaction_id": self.transaction_id,
+            "signature": self.signature.hex() if self.signature else None
+        }
+        return json.dumps(transaction_dict)
+    
+    @staticmethod
+    def from_json(json_str):
+        """
+        Deserializes a JSON string back into a Transaction object.
+        """
+        data = json.loads(json_str)
+        transaction = Transaction(
+            sender_address=RSA.import_key(data["sender_address"].encode()),
+            receiver_address=RSA.import_key(data["receiver_address"].encode()),
+            type=data["type"],
+            nonce=data["nonce"],
+            amount=data["amount"],
+            message=data["message"],
+            signature=bytes.fromhex(data["signature"]) if data["signature"] else None,
+            transaction_id=data["transaction_id"]
+        )
+        return transaction
         
     def transaction_hash(self):
         """
