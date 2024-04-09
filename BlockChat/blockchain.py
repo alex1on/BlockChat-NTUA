@@ -11,9 +11,10 @@ class Blockchain:
     chain -> list of blocks
     """
     
-    def __init__(self, N=5, wallet=None):
+    def __init__(self, genesis=False, N=5, wallet=None):
         self.chain = []
-        self.create_genesis_block(N, wallet)
+        if genesis:
+            self.create_genesis_block(N, wallet)
 
     def create_genesis_block(self, N=5, wallet=None):
         """
