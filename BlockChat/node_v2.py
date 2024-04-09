@@ -29,16 +29,16 @@ class node:
         self.port = port
         self.N = N
         # self.network = network
-        self.chain = []
-        self.bootstrap = bootstrap
         self.wallet = generate_wallet()
+        self.chain = Blockchain()
+        self.bootstrap = bootstrap
 
         self.net_nodes = []
 
         if self.bootstrap:
             self.id = 0
             self.next_id = 1
-            self.chain = Blockchain(N, self.wallet)
+            self.chain = Blockchain(True, N, self.wallet)
             self.bootstraps()
 
         else:
@@ -48,6 +48,9 @@ class node:
         self.threads = []
         self.running = True
         self.open_connection(ip, port)
+
+    def set_node_id(self, id):
+        self.id = id
 
     def is_bootstrap(self):
         return self.id == 0
@@ -187,13 +190,25 @@ class node:
     ### Below here are functions regarding network connectivity between nodes ###
     ### might be refractored later...
     ###############
-    def handle_client_response(self, ip, port, data):
-        if data["type"] == "initialization":
-            self.update_and_broadcast_network(data)
-        elif data["type"] == "set up ready":
-            self.net_nodes = data["nodes"]
-            print(json.dumps(self.net_nodes, sort_keys=True, indent=4))
+    def advertise_node(self, host, port):
+        message = {
+            "type": "initialization",
+            "node": {
+                "ip": self.ip,
+                "port": self.port,
+                "public": self.wallet.public_key.export_key(format="PEM").decode(),
+            },
+        }
+        send_message(host, port, message)
 
+    def send_new_node_info(self, host, port, data):
+        message = {
+            "type": "init_response",
+            "id": self.next_id,
+            "blockchain": self.chain.to_json(),
+        }
+        send_message(host, port, message)
+        self.update_and_broadcast_network(data)
 
     def update_and_broadcast_network(self, data):
         self.add_node_to_network(
@@ -204,17 +219,30 @@ class node:
         )
         self.next_id += 1
 
-        message = {
-            "type": "set up ready",
-            "nodes": self.net_nodes
-        }
+        message = {"type": "set up ready", "nodes": self.net_nodes}
 
         # TODO: send_message on network info should only be called when all the nodes are inserted in the network.
-        # TODO: also the send_message function in this case should broadcast the message instead of simply sending it to a specific host. 
-        # INFO: Check multicast implementation on udp / tcp packets.        
-        # if(len(self.net_nodes) == self.N): 
+        # TODO: also the send_message function in this case should broadcast the message instead of simply sending it to a specific host.
+        # INFO: Check multicast implementation on udp / tcp packets.
+        if len(self.net_nodes) == self.N:
+            send_message(data["node"]["ip"], data["node"]["port"], message)
 
-        send_message(data["node"]["ip"], data["node"]["port"], message)
+    def node_finish_init(self, data):
+        self.set_node_id(data["id"])
+        self.chain = Blockchain.from_json(data["blockchain"])
+        print(self.id)
+        self.chain.print()
+
+    def handle_client_response(self, host, port, data):
+        # TODO: The way host & port is handled need to be remade.
+        if data["type"] == "initialization":
+            # self.update_and_broadcast_network(data)
+            self.send_new_node_info(host, data["node"]["port"], data)
+        elif data["type"] == "init_response":
+            self.node_finish_init(data)
+        elif data["type"] == "set up ready":
+            self.net_nodes = data["nodes"]
+            print(json.dumps(self.net_nodes, sort_keys=True, indent=4))
 
     def handle_client(self, conn, addr, blockchain):
         with conn:
@@ -224,16 +252,17 @@ class node:
 
                 if not data_received:
                     break
-                #print(data_received)
+                # print(data_received)
 
                 data = json.loads(data_received.decode())
                 print(f"Received from {addr}: {data}")
                 # blockchain.add_block(data)
-                #print(data)
+                # print(data)
 
+                # TODO: The way it works right now is not ideal. Fix inc.
                 self.handle_client_response(addr[0], addr[1], data)
 
-        #print(f"Current Blockchain: {blockchain.chain}")
+        # print(f"Current Blockchain: {blockchain.chain}")
 
     def node_server(self, host, port, blockchain):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as self.server_socket:
@@ -261,17 +290,6 @@ class node:
             target=self.node_server, args=(host, port, self.chain)
         )
         server_thread.start()
-
-    def advertise_node(self, host, port):
-        message = {
-            "type": "initialization",
-            "node": {
-                "ip": self.ip,
-                "port": self.port,
-                "public": self.wallet.public_key.export_key(format="PEM").decode(),
-            },
-        }
-        send_message(host, port, message)
 
     def shutdown(self):
         print("Shutting down the server...")
