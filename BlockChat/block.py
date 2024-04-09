@@ -134,7 +134,10 @@ class BlockChatCoinBlock:
         )
         print(f"Block Index: {self.index}")
         print(f"Timestamp: {readable_timestamp}")
-        print(f"Transactions: {self.transactions}")
+        for transaction in self.transactions:
+            print("Transaction: ")
+            transaction.print()
+            print("---")
         print(f"Validator: {self.validator}")
         print(f"Current Hash: {self.hash}")
         print(f"Previous Hash: {self.previous_hash}\n")
