@@ -1,3 +1,4 @@
+import json
 from block import BlockChatCoinBlock
 from transaction import Transaction
 from wallet import Wallet
@@ -43,7 +44,29 @@ class Blockchain:
                 return False
 
         return True
+    
+    def to_json(self):
+        """
+        Serializes the entire blockchain into a JSON string for transmission,
+        including the serialization of each block within the chain.
+        """
+        blockchain_dict = {
+            "chain": [json.loads(block.to_json()) for block in self.chain]
+        }
+        return json.dumps(blockchain_dict)
+    
+    @staticmethod
+    def from_json(json_str):
+        """
+        Deserializes a JSON string back into a Blockchain object,
+        including reconstructing each BlockChatCoinBlock from its JSON representation.
+        """
+        data = json.loads(json_str)
+        blockchain = Blockchain()
+        blockchain.chain = [BlockChatCoinBlock.from_json(json.dumps(block)) for block in data["chain"]]
+        return blockchain
 
+    
     def print(self):
         """
         Prints blockchain's info.
