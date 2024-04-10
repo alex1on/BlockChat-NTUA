@@ -43,12 +43,15 @@ class node:
             self.bootstraps()
 
         else:
-            self.advertise_node("localhost", 5000)
+            self.advertise_node("bootstrap_node", 5001)
+            for node in self.net_nodes:
+                self.advertise_node(node.ip, node.port)
 
         self.server_socket = None
         self.threads = []
         self.running = True
-        self.open_connection(ip, port)
+        self.open_connection("0.0.0.0", port)
+        # self.open_connection(ip, port)
 
     def set_node_id(self, id):
         self.id = id
