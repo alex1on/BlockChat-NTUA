@@ -7,6 +7,7 @@ import sys
 import json
 from blockchain import Blockchain
 from transaction import Transaction
+from block import BlockChatCoinBlock
 from utils import generate_wallet
 
 
@@ -161,6 +162,20 @@ class node:
         # for node in self.network:
         #     pass
 
+    def broadcast_block(self, receiver_node=0, block=None):
+        """
+        Broadcasts the block to every node
+        """
+        block = self.dummy_block_creator()
+        self.chain.add_block(block)
+        receiver_node = self.net_nodes[receiver_node]
+
+        message = {
+            "type": "broadcast_block",
+            "block": block.to_json()
+        }
+        send_message(receiver_node["ip"], receiver_node["port"], message)
+
     def stake(self, amount):
         """
         Stakes amount for the proof-of-stake process.
@@ -254,6 +269,12 @@ class node:
             self.chain.chain[-1].add_transaction(transaction)
             self.chain.print()
 
+    def handle_new_block(self, data):
+        block = BlockChatCoinBlock.from_json(data["block"])
+        #if block.validate_block(self.chain.chain[-1], 0):
+        self.chain.add_block(block)
+        self.chain.print()
+
     def handle_client_response(self, host, port, data):
         # TODO: The way host & port is handled need to be remade.
         if data["type"] == "initialization":
@@ -266,12 +287,14 @@ class node:
             print(json.dumps(self.net_nodes, sort_keys=True, indent=4))
         elif data["type"] == "broadcast_transaction":
             self.handle_new_transaction(data)
+        elif data["type"] == "broadcast_block":
+            self.handle_new_block(data)
 
     def handle_client(self, conn, addr, blockchain):
         with conn:
             while True:
                 # TODO: Check what happens when string message is bigger than buffer size, implement for bigger messages
-                data_received = conn.recv(2048)
+                data_received = conn.recv(4096)
 
                 if not data_received:
                     break
@@ -326,7 +349,13 @@ class node:
         print("Signal received, shutting down...")
         self.shutdown()
         sys.exit(0)
+    
+    def dummy_block_creator(self):
+        block = BlockChatCoinBlock(len(self.chain.chain) + 1, [], self.chain.chain[-1].hash)
+        block.add_transaction(Transaction(self.wallet.public_key, RSA.import_key(self.net_nodes[0]["public_key"].encode()), "coins", 1, 10))
+        block.add_transaction(Transaction(self.wallet.public_key, RSA.import_key(self.net_nodes[0]["public_key"].encode()), "coins", 2, 20))
 
+        return block
 
 # TODO: Implement the broadcast method
 def send_message_broadcast(data):
