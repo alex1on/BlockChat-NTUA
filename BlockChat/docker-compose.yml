@@ -1,0 +1,34 @@
+version: '3'
+services:
+  bootstrap_node:
+    build: .
+    command: python ./start_bootstrap.py
+    ports:
+      - "5001:5001"
+    networks:
+      - blockchain_network
+
+  simple_node1:
+    build: .
+    command: python ./start_node.py 5002
+    depends_on:
+      - bootstrap_node
+    ports:
+      - "5002:5002"
+    networks:
+      - blockchain_network
+  
+  simple_node2:
+    build: .
+    command: python ./start_node.py 5003
+    depends_on:
+      - bootstrap_node
+    ports:
+      - "5003:5003"
+    networks:
+      - blockchain_network
+
+
+networks:
+  blockchain_network:
+    driver: bridge
