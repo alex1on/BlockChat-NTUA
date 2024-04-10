@@ -361,7 +361,32 @@ class node:
         # TODO: When receiving the block, each node needs to add transactions to its wallet
         # TODO: Also the balance needs to get updated (but this can happen when state is broadcasted and also update nonce)
         # TODO: Perhaps remove the balance and stake from wallet class since they are persisted in node's local/valid state
-            
+    
+    def view_block(self):
+        """
+        Finds the most recently validated block where the validator is not None and prints its transactions
+        and the id of its validator.
+        """
+        validated_block = None
+        for block in reversed(self.blockchain.chain):
+            if block.validator is not None:
+                validated_block = block
+                break
+                
+        if validated_block is None:
+            print("No validated blocks found.")
+            return
+        
+        validator = RSA.import_key(validated_block.validator)
+        validator_index = self.find_index(validator, 'node')
+        validator_id = self.net_nodes[validator_index]["id"]
+        
+        print("Last validated block info:")
+        print("Transactions:")
+        for transaction in validated_block.transactions:
+            transaction.print()
+        print("Validator id: ", validator_id)
+    
     ###############
     ### Below here are functions regarding network connectivity between nodes ###
     ### might be refractored later...
