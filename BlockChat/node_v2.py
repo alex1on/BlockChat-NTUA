@@ -83,26 +83,34 @@ class node:
             }
         )
 
-    def create_transaction(self, type, amount=None, message=None, receiver="0"):
+    def create_transaction(self, type, amount=None, message=None, receiver=0):
         """
         Creates a transaction
+        receiver: The node id of the receiving node
         """
-        if self.wallet.public_key == receiver:
+        print(self.id)
+        print(self.net_nodes)
+        if self.id == receiver:
             raise Exception("Recipient can't be the sender.")
         if amount and amount <= 0:
             raise Exception("Invalid Transaction: Amount can't be negative or zero!")
 
+        receiver_node = self.net_nodes[receiver]
+
         nonce = self.wallet.increment_nonce()
         transaction = Transaction(
-            self.wallet.public_key, receiver.public_key, type, nonce, amount, message
+            self.wallet.public_key, RSA.import_key(receiver_node["public_key"].encode()), type, nonce, amount, message
         )
         # self.wallet.transactions.append(transaction)
-
         # Sign the transaction
         transaction.sign_transaction(self.wallet.private_key)
 
+        # TODO: Names are missleading change either node blockchain name or block list on blockchain
+        self.chain.chain[-1].add_transaction(transaction)
+        self.chain.print()
+
         # Broadcast the transaction
-        self.broadcast_transaction(transaction)
+        self.broadcast_transaction(receiver_node, transaction)
 
     def validate_transaction(self, transaction):
         """
@@ -121,30 +129,37 @@ class node:
         sender_info = next(
             (
                 node
-                for node in self.network
-                if node["public_key"] == transaction.sender_address
+                for node in self.net_nodes
+                    if node["public_key"] == transaction.sender_address
             ),
             None,
         )
         if not sender_info:
             raise Exception("Invalid transaction: Sender not found in the network.")
 
-        # b) Check the account balance
-        if sender_info["balance"] < transaction.cost():
-            raise Exception("Invalid transaction: Insufficient balance.")
+        # TODO: Handle balance and nonce on Transactions
+        # # b) Check the account balance
+        # if sender_info["balance"] < transaction.cost():
+        #     raise Exception("Invalid transaction: Insufficient balance.")
 
-        # c) Check nonce for replay protection
-        if sender_info["nonce"] != transaction.nonce:
-            raise Exception("Invalid transaction: Incorrect nonce.")
+        # # c) Check nonce for replay protection
+        # if sender_info["nonce"] != transaction.nonce:
+        #     raise Exception("Invalid transaction: Incorrect nonce.")
 
         return True
 
-    def broadcast_transaction(self, transaction):
+    # TODO: Receiver is temp as it will be changed to all the nodes later
+    def broadcast_transaction(self, receiver_node, transaction):
         """
         Broadcasts the transaction to every node
         """
-        for node in self.network:
-            pass
+        message = {
+            "type": "broadcast_transaction",
+            "transaction": transaction.to_json()
+        }
+        send_message(receiver_node["ip"], receiver_node["port"], message)
+        # for node in self.network:
+        #     pass
 
     def stake(self, amount):
         """
@@ -224,14 +239,20 @@ class node:
         # TODO: send_message on network info should only be called when all the nodes are inserted in the network.
         # TODO: also the send_message function in this case should broadcast the message instead of simply sending it to a specific host.
         # INFO: Check multicast implementation on udp / tcp packets.
-        if len(self.net_nodes) == self.N:
-            send_message(data["node"]["ip"], data["node"]["port"], message)
+        #if len(self.net_nodes) == self.N:
+        send_message(data["node"]["ip"], data["node"]["port"], message)
 
     def node_finish_init(self, data):
         self.set_node_id(data["id"])
         self.chain = Blockchain.from_json(data["blockchain"])
         print(self.id)
         self.chain.print()
+
+    def handle_new_transaction(self, data):
+        transaction = Transaction.from_json(data["transaction"])
+        if self.validate_transaction(transaction):
+            self.chain.chain[-1].add_transaction(transaction)
+            self.chain.print()
 
     def handle_client_response(self, host, port, data):
         # TODO: The way host & port is handled need to be remade.
@@ -243,6 +264,8 @@ class node:
         elif data["type"] == "set up ready":
             self.net_nodes = data["nodes"]
             print(json.dumps(self.net_nodes, sort_keys=True, indent=4))
+        elif data["type"] == "broadcast_transaction":
+            self.handle_new_transaction(data)
 
     def handle_client(self, conn, addr, blockchain):
         with conn:
