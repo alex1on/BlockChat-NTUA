@@ -179,6 +179,9 @@ class node:
         # Retrieve the sender's state index and then access the state
         sender_state_index = self.find_index(sender_public_key, "state")
         sender_state = self.local_state[sender_state_index]
+   
+        if not sender_state:
+            raise Exception("Invalid transaction: Sender not found in the network.")
 
         # Check the sender's account balance
         if sender_state["balance"] < transaction.cost():
@@ -430,9 +433,6 @@ class node:
 
     def node_finish_init(self, data):
         self.set_node_id(data["id"])
-        self.chain = Blockchain.from_json(data["blockchain"])
-        # print(self.id)
-        # self.chain.print()
         self.blockchain = Blockchain.from_json(data["blockchain"])
         print(self.id)
         self.blockchain.print()
