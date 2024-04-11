@@ -10,7 +10,7 @@ services:
 
   simple_node1:
     build: .
-    command: python ./start_node.py 5002
+    command: python ./start_node.py 5001
     depends_on:
       - bootstrap_node
     ports:
@@ -20,7 +20,7 @@ services:
   
   simple_node2:
     build: .
-    command: python ./start_node.py 5003
+    command: python ./start_node.py 5001
     depends_on:
       - bootstrap_node
     ports:
@@ -32,3 +32,6 @@ services:
 networks:
   blockchain_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
