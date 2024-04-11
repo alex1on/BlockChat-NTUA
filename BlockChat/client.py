@@ -32,7 +32,7 @@ def print_help():
     print("""
         Available commands:
         t <recipient_address> <amount> - Transfer amount of BTC coins to recipient_address.
-        m <recipient_address> <message> - Send a message to recipient_address.
+        t <recipient_address> <message> - Send a message to recipient_address.
         stake <amount> - Stake amount of coins for proof of stake.
         view - View transactions in the last block.
         balance - Show wallet balance.
