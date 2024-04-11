@@ -60,6 +60,8 @@ class BlockChatCoinBlock:
         if self.previous_hash != prev_block.hash:
             print("Previous block's hash doesn't match with current block's previous hash")
             return False
+        
+        print("Block validated!")
 
         return True
     
@@ -73,8 +75,8 @@ class BlockChatCoinBlock:
         """
         Returns True if the block is full.
         # """
-        # if self.capacity < len(self.transactions):
-        #     raise ValueError("Total capacity exceeded! This shouldn't happen!")
+        if self.capacity < len(self.transactions):
+            raise ValueError("Total capacity exceeded! This shouldn't happen!")
         return self.capacity == len(self.transactions)
     
     def total_fees(self):
@@ -132,6 +134,7 @@ class BlockChatCoinBlock:
             "%Y-%m-%d %H:%M:%S"
         )
         print(f"Block Index: {self.index}")
+        print(f"Capacity: {self.capacity}")
         print(f"Timestamp: {readable_timestamp}")
         for transaction in self.transactions:
             print("Transaction: ")

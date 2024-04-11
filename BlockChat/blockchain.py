@@ -11,19 +11,22 @@ class Blockchain:
     chain -> list of blocks
     """
 
-    def __init__(self, genesis=False, N=5, wallet=None, block_capacity=10):
+    def __init__(self, block_capacity, genesis=False, N=5, wallet=None):
         self.chain = []
         self.block_capacity = block_capacity
         if genesis:
-            self.create_genesis_block(N, wallet)
+            self.create_genesis_block(wallet, N)
 
-    def create_genesis_block(self, N=5, wallet=None):
+    def create_genesis_block(self, wallet, N):
         """
         Creates the genesis block.
         """
+        # TODO: Change the sender to 0
+        # TODO: Handle Initial Transactions
         transaction = Transaction(
             wallet.public_key, wallet.public_key, "coins", 0, 1000 * N
         )
+        wallet.balance = 1000
         genesis_block = BlockChatCoinBlock(0, [transaction], 0, 1)
         self.chain.append(genesis_block)
 
@@ -32,9 +35,6 @@ class Blockchain:
         Adds a new block in the chain.
         """
         self.chain.append(block)
-        # previous_block = self.chain[-1]
-        # new_block = BlockChatCoinBlock(len(self.chain), transactions, validator, previous_block.hash)
-        # self.chain.append(new_block)
 
     def validate_chain(self):
         """
@@ -55,7 +55,8 @@ class Blockchain:
         including the serialization of each block within the chain.
         """
         blockchain_dict = {
-            "chain": [json.loads(block.to_json()) for block in self.chain]
+            "chain": [json.loads(block.to_json()) for block in self.chain],
+            "block_capacity" : self.block_capacity
         }
         return json.dumps(blockchain_dict)
 
@@ -66,7 +67,7 @@ class Blockchain:
         including reconstructing each BlockChatCoinBlock from its JSON representation.
         """
         data = json.loads(json_str)
-        blockchain = Blockchain()
+        blockchain = Blockchain(data["block_capacity"])
         blockchain.chain = [
             BlockChatCoinBlock.from_json(json.dumps(block)) for block in data["chain"]
         ]

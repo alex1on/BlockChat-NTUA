@@ -17,8 +17,8 @@ class Wallet:
         self.private_key = private_key
         self.transactions = []
         self.nonce = 0
-        self.balance = 0
-        self.stake = 0
+        self.balance = 1000
+        self.stake = 10
         
     def wallet_balance(self):
         """
@@ -34,7 +34,7 @@ class Wallet:
                 balance += transaction.amount
                 # self.add_coins(transaction.amount)
         if balance < 0:
-            raise ValueError("Balance shouldn't be negative! Something went wrong! 😕")
+            raise ValueError("Balance shouldn't be negative! Something went wrong!")
         
         self.balance = balance
         
@@ -59,7 +59,6 @@ class Wallet:
         """
         self.nonce += 1
         
-        return self.nonce
                 
     def print(self):
         """
