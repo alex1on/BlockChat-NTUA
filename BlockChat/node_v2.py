@@ -29,7 +29,7 @@ class node:
         bootstrap       -> Flag indicating if the node is the bootstrap node.
     """
 
-    def __init__(self, ip, port, N, bootstrap=False):
+    def __init__(self, ip, port, N, block_capacity=10, bootstrap=False):
         self.ip = ip
         self.port = port
         self.N = N
@@ -43,15 +43,10 @@ class node:
         self.setup_complete = False
         self.transaction_queue = []
 
-        self.setup_complete = False
-        self.transaction_queue = []
-
-        # TODO: Update local_state and/or valid_state after adding a new node. local_state and valid_state should be identical after network initialization.
-
         if self.bootstrap:
             self.id = 0
             self.next_id = 1
-            self.blockchain = Blockchain(True, N, self.wallet)
+            self.blockchain = Blockchain(True, N, self.wallet, block_capacity)
             self.bootstraps()
             self.setup_complete = True
         else:
@@ -64,7 +59,6 @@ class node:
         self.running = True
         self.open_connection("0.0.0.0", port)
         self.open_connection_broadcast("0.0.0.0", port + 1)
-        # self.open_connection(ip, port)
 
     def set_node_id(self, id):
         """
@@ -86,7 +80,7 @@ class node:
     def finish_setup(self, data):
         self.net_nodes = data["nodes"]
         for node in self.net_nodes:
-            self.add_node_to_valid_state(node["id"], node["public_key"], 1000, 0, 0)
+            self.add_node_to_valid_state(node["id"], node["public_key"], 990, 10, 0)
         self.local_state = self.valid_state.copy()
 
     def add_node_to_network(self, id, ip, port, public_key):
@@ -126,8 +120,6 @@ class node:
         """
         Creates a new transaction and broadcasts it to the network.
         """
-        # print(self.id)
-        # print(self.net_nodes)
         if not self.setup_complete:
             self.transaction_queue.append((type, amount, message, receiver))
             return
@@ -251,12 +243,11 @@ class node:
         # Add the transaction to the blockchain's current block if specified
         if update_blockchain:
             self.blockchain.chain[-1].add_transaction(transaction)
-            self.blockchain.print()
 
         # Check if the current block is full and mint a new block if necessary
         if update_blockchain and self.blockchain.chain[-1].is_full():
             self.mint_block()
-            self.blockchain.add_block(self.blockchain.empty_block())
+            # self.blockchain.add_block(self.blockchain.empty_block())
 
     def run_block(self, block):
         """
@@ -277,25 +268,25 @@ class node:
         }
         # send_message(receiver_node["ip"], receiver_node["port"], message)
         send_message_broadcast(receiver_node["port"] + 1, message)
-        # for node in self.network:
-        #     pass
 
     def process_transaction_queue(self):
         for transaction in self.transaction_queue:
             self.create_transaction(*transaction)
         self.transaction_queue = []
 
-    def broadcast_block(self, receiver_node=0, block=None):
+    def broadcast_block(self, block=None):
         """
         Broadcasts a block to all nodes in the network.
         """
-        block = self.dummy_block_creator()
-        self.blockchain.add_block(block)
-        receiver_node = self.net_nodes[receiver_node]
+        # block = self.dummy_block_creator()
+        # self.blockchain.add_block(block)
+        port = self.port + 1
 
-        message = {"type": "broadcast_block", "block": block.to_json()}
+        if block is not None:
+            message = {"type": "broadcast_block", "block": block.to_json()}
+
         # send_message(receiver_node["ip"], receiver_node["port"], message)
-        send_message_broadcast(receiver_node["port"] + 1, message)
+        send_message_broadcast(port, message)
 
     def stake(self, amount):
         """
@@ -318,7 +309,7 @@ class node:
         """
         # Seed the random number generator with the hash of the last block
         if len(self.blockchain.chain) > 0:
-            last_block_hash = self.blockchain.chain[-1].hash
+            last_block_hash = self.blockchain.chain[-1].previous_hash
             random.seed(int(hashlib.sha256(last_block_hash.encode()).hexdigest(), 16))
 
             # Create a list of tuples (public_key, stake) for all states that have a stake
@@ -332,6 +323,7 @@ class node:
                 lottery_pool = [pk for pk, stake in stakes for _ in range(stake)]
                 # Randomly select a "ticket" (public_key)
                 selected_validator_public_key = random.choice(lottery_pool)
+                print("Selected validator ->", selected_validator_public_key)
                 return selected_validator_public_key
         return None
 
@@ -350,45 +342,50 @@ class node:
         """
         # Retrieve the public key of the selected validator via the proof of stake process
         validator_public_key = self.proof_of_stake()
+        self.expected_validator = validator_public_key
 
         # Check if the current node is the selected validator
-        if validator_public_key and self.wallet.public_key == validator_public_key:
+        if (
+            validator_public_key
+            and self.wallet.public_key.export_key("PEM").decode()
+            == validator_public_key
+        ):
             candidate_block = self.blockchain.chain[-1]
 
+            # Assign the validator to the block
             validator = RSA.import_key(validator_public_key)
+            self.blockchain.chain[-1].validator = validator
 
             # Validate the block
-            if candidate_block.validate_block(
-                candidate_block.previous_block, validator
-            ):
-                # Compute the fees
-                total_fees = candidate_block.total_fees()
+            # if candidate_block.validate_block(
+            #     candidate_block.previous_block, validator
+            # ):
 
-                # Find the validator index in the local state to update the balance with fees
-                validator_index = self.find_index(validator, "state")
-                self.local_state[validator_index]["balance"] += total_fees
+            # Compute the fees
+            total_fees = candidate_block.total_fees()
 
-                # Update the global state
-                self.valid_state = self.local_state.copy()
+            # Find the validator index in the local state to update the balance with fees
+            validator_index = self.find_index(validator, "state")
+            self.local_state[validator_index]["balance"] += total_fees
 
-                # Broadcast the validated block to the network
-                self.broadcast_block(candidate_block)
+            # Update the global state
+            self.valid_state = self.local_state.copy()
 
-                # Add transactions related to this node's wallet
-                add_transactions_to_wallet(self.wallet, candidate_block.transactions)
+            # Broadcast the validated block to the network
+            self.broadcast_block(candidate_block)
 
-                # Update wallet's balance
-                self.wallet.wallet_balance()
+            # Add transactions related to this node's wallet
+            add_transactions_to_wallet(self.wallet, candidate_block.transactions)
 
-                print("Block minted and broadcasted successfully.")
-            else:
-                print("Failed to validate the candidate block. Block not minted.")
+            # Update wallet's balance
+            self.wallet.wallet_balance()
+
+            print("Block minted and broadcasted successfully.")
         else:
             print("Node is not the selected validator or no validator selected.")
 
         # TODO: When receiving the block, each node needs to add transactions to its wallet
         # TODO: Also the balance needs to get updated (but this can happen when state is broadcasted and also update nonce)
-        # TODO: Perhaps remove the balance and stake from wallet class since they are persisted in node's local/valid state
 
     ###############
     ### Below here are functions regarding network connectivity between nodes ###
@@ -457,35 +454,59 @@ class node:
         """
         Handles a new incoming block.
         """
+        print("Handle new block")
         new_block = BlockChatCoinBlock.from_json(data["block"])
 
-        # Removes last block and adds the validated block
-        self.blockchain.chain.pop()
-        self.blockchain.add_block(new_block)
+        validator = self.expected_validator
+
+        # Removes last block, validates the new and adds the validated block
+        print("Blockchain BEFORE!")
         self.blockchain.print()
+        x = self.blockchain.chain.pop()
+        print("Blockchain AFTER")
+        self.blockchain.print()
+        print("Popped block ->")
+        x.print()
+        if new_block.validate_block(
+            self.blockchain.chain[-1],
+            validator,
+        ):
+            self.blockchain.add_block(new_block)
+            self.blockchain.print()
 
-        # Restores old state
-        self.local_state = self.valid_state.copy()
+            # Restores old state
+            self.local_state = self.valid_state.copy()
 
-        # Runs the block updating the local state and updates valid_state
-        self.run_block(self.blockchain.chain[-1])
+            # Runs the block updating the local state and updates valid_state
+            self.run_block(self.blockchain.chain[-1])
 
-        # Find validator's index in local_state
-        validator_index = None
-        for index, state in enumerate(self.local_state):
-            if state["public_key"] == new_block.validator:
-                validator_index = index
-                break
+            # Add transactions related to this node's wallet
+            add_transactions_to_wallet(self.wallet, new_block.transactions)
 
-        # Add the total fees in validator's balance
-        if validator_index is not None:
-            total_fees = new_block.total_fees()
-            self.local_state[validator_index]["balance"] += total_fees
+            # Update wallet's balance
+            self.wallet.wallet_balance()
 
-        # Update the valid_state
-        self.valid_state = self.local_state.copy()
+            # Find validator's index in local_state
+            validator_index = None
+            for index, state in enumerate(self.local_state):
+                if state["public_key"] == new_block.validator:
+                    validator_index = index
+                    break
+
+            # Add the total fees in validator's balance
+            if validator_index is not None:
+                total_fees = new_block.total_fees()
+                self.local_state[validator_index]["balance"] += total_fees
+
+            # Update the valid_state
+            self.valid_state = self.local_state.copy()
+        else:
+            print("Block validation failed.")
+
+        self.blockchain.add_block(self.blockchain.empty_block())
 
     def handle_client_response(self, host, port, data):
+        print(data["type"])
         # TODO: The way host & port is handled need to be remade.
         if data["type"] == "initialization":
             # self.update_and_broadcast_network(data)
@@ -509,7 +530,7 @@ class node:
         with conn:
             while True:
                 # TODO: Check what happens when string message is bigger than buffer size, implement for bigger messages
-                data_received = conn.recv(4096)
+                data_received = conn.recv(32768)
 
                 if not data_received:
                     break
@@ -540,7 +561,6 @@ class node:
                 print(f"Node listening on {host}:{port}")
 
             while self.running:
-                # print("here")
                 # self.server_socket.settimeout(1.0)  # Allow checking the running flag -- comments: might not be needed
                 try:
                     conn, addr = self.server_socket.accept()
@@ -577,7 +597,7 @@ class node:
         while self.running:
             try:
                 data, addr = self.udp_socket.recvfrom(
-                    4096
+                    32768
                 )  # Adjust buffer size as needed
                 if data:
                     message_data = json.loads(data.decode())
