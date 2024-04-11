@@ -7,12 +7,13 @@ from wallet import Wallet
 class Blockchain:
     """
     Class that represents a BlockChat blockchain.
-    
+
     chain -> list of blocks
     """
-    
-    def __init__(self, genesis=False, N=5, wallet=None):
+
+    def __init__(self, genesis=False, N=5, wallet=None, block_capacity=10):
         self.chain = []
+        self.block_capacity = block_capacity
         if genesis:
             self.create_genesis_block(N, wallet)
 
@@ -20,8 +21,10 @@ class Blockchain:
         """
         Creates the genesis block.
         """
-        transaction = Transaction(wallet.public_key, wallet.public_key, 'coins', 0, 1000 * N)
-        genesis_block = BlockChatCoinBlock(0,[transaction], 0, 1)
+        transaction = Transaction(
+            wallet.public_key, wallet.public_key, "coins", 0, 1000 * N
+        )
+        genesis_block = BlockChatCoinBlock(0, [transaction], 0, 1)
         self.chain.append(genesis_block)
 
     def add_block(self, block):
@@ -45,7 +48,7 @@ class Blockchain:
                 return False
 
         return True
-    
+
     def to_json(self):
         """
         Serializes the entire blockchain into a JSON string for transmission,
@@ -55,7 +58,7 @@ class Blockchain:
             "chain": [json.loads(block.to_json()) for block in self.chain]
         }
         return json.dumps(blockchain_dict)
-    
+
     @staticmethod
     def from_json(json_str):
         """
@@ -64,10 +67,16 @@ class Blockchain:
         """
         data = json.loads(json_str)
         blockchain = Blockchain()
-        blockchain.chain = [BlockChatCoinBlock.from_json(json.dumps(block)) for block in data["chain"]]
+        blockchain.chain = [
+            BlockChatCoinBlock.from_json(json.dumps(block)) for block in data["chain"]
+        ]
         return blockchain
 
-    
+    def empty_block(self):
+        index = self.chain[-1].index + 1
+        previous_hash = self.chain[-1].hash
+        return BlockChatCoinBlock(index, [], previous_hash, self.block_capacity, None)
+
     def print(self):
         """
         Prints blockchain's info.
