@@ -22,7 +22,7 @@ class Wallet:
         
     def wallet_balance(self):
         """
-        Computes and returns the balance (in BlockChat Coins) of the wallet.
+        Computes, updates and returns the balance (in BlockChat Coins) of the wallet.
         """
         balance = 0
         # self.balance = 0
@@ -35,12 +35,14 @@ class Wallet:
                 # self.add_coins(transaction.amount)
         if balance < 0:
             raise ValueError("Balance shouldn't be negative! Something went wrong! 😕")
+        
+        self.balance = balance
+        
         return balance
     
     def set_stake(self, amount):
         if amount <= self.balance:
             self.stake = amount
-            # TODO: Validator should update the balance 
         else:
             raise ValueError("Insufficient balance to stake this amount")
     

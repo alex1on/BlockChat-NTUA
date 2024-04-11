@@ -59,9 +59,6 @@ class BlockChatCoinBlock:
             print("Previous block's hash doesn't match with current block's previous hash")
             return False
 
-        # Update validator's balance and stake
-        validator.balance -= validator.stake
-        validator.stake = 0
         return True
     
     def add_transaction(self, transaction):
@@ -70,7 +67,7 @@ class BlockChatCoinBlock:
         """
         self.transactions.append(transaction)
         
-    def full_block(self):
+    def is_full(self):
         """
         Returns True if the block is full.
         """
