@@ -8,7 +8,7 @@ import json
 from blockchain import Blockchain
 from transaction import Transaction
 from block import BlockChatCoinBlock
-from utils import generate_wallet, add_transactions_to_wallet
+from utils import generate_wallet, add_transactions_to_wallet, send_message, send_message_broadcast
 
 
 class node:
@@ -20,7 +20,7 @@ class node:
         id              -> Unique identifier for the node, assigned during network setup.
         ip              -> IP address of the node.
         port            -> Network port the node listens on.
-        N               -> Maximum allowed nodes in the network.
+        N               -> Maximum number of allowed nodes in the network.
         net_nodes       -> Information about the network nodes (IDs, IPs, Ports, Public Keys).
         valid_state     -> Stores wallet information (nonces, balances, stakes) after validating a block.
         local_state     -> Tracks wallet information, updated with each transaction.
@@ -40,16 +40,13 @@ class node:
         self.wallet = generate_wallet()
         self.blockchain = Blockchain(block_capacity)
         self.bootstrap = bootstrap
+        self.block_capacity = block_capacity
 
         self.setup_complete = False
         self.transaction_queue = []
 
         if self.bootstrap:
-            self.id = 0
-            self.next_id = 1
-            self.blockchain = Blockchain(block_capacity, True, N, self.wallet)
             self.bootstraps()
-            self.setup_complete = True
         else:
             self.advertise_node("bootstrap_node", 5001)
 
@@ -67,8 +64,13 @@ class node:
 
     def bootstraps(self):
         """
-        Initializes the network by adding the bootstrap node to the network and valid state lists.
+        Initializes bootstrap's node fields.
+        It also initializes the network by adding the bootstrap node to the network and valid state lists.
         """
+        self.id = 0
+        self.next_id = 1
+        self.blockchain = Blockchain(self.block_capacity, True, self.N, self.wallet)
+        
         self.add_node_to_network(
             self.id,
             self.ip,
@@ -82,19 +84,25 @@ class node:
             10,
             0,
         )
+        
+        self.setup_complete = True
 
     def finish_setup(self, data):
         """
-        Updates the local and valid state after initialization.
+        Handles a "set up ready" message by:
+            - Updating the local and valid state after initialization and
+            - Setting the setup_complete flag to True.
         """
         self.net_nodes = data["nodes"]
         for node in self.net_nodes:
             self.add_node_to_valid_state(node["id"], 1000, 10, 0)
         self.local_state = self.valid_state.copy()
+        
+        self.setup_complete = True
 
     def add_node_to_network(self, id, ip, port, public_key):
         """
-        Adds a node's details to the network nodes list. Raises an exception if the network is full.
+        Adds a node's details to the network list. Raises an exception if the network is full.
         """
         if len(self.net_nodes) == self.N:
             raise Exception("Cannot add more nodes. Network is full!")
@@ -397,9 +405,11 @@ class node:
 
     ###############
     ### Below here are functions regarding network connectivity between nodes ###
-    ### might be refractored later...
     ###############
     def advertise_node(self, host, port):
+        """
+        Advertises itself to other node (bootstrap) hy sending an initialization message.
+        """
         message = {
             "type": "initialization",
             "node": {
@@ -411,6 +421,9 @@ class node:
         send_message(host, port, message)
 
     def send_new_node_info(self, host, port, data):
+        """
+        Creates and sends a "init_response" message and updates the network.
+        """
         message = {
             "type": "init_response",
             "id": self.next_id,
@@ -420,6 +433,13 @@ class node:
         self.update_and_broadcast_network(data)
 
     def update_and_broadcast_network(self, data):
+        """
+        Receives and handles an "init_response" message. It:
+            - Adds the received node in the network list,
+            - Adds node's wallet info in valid_state.
+            - Updates the next_id
+            - If network reach its full node capacity, it creates and broadcasts a "set up ready" message
+        """
         self.add_node_to_network(
             self.next_id,
             data["node"]["ip"],
@@ -428,28 +448,32 @@ class node:
         )
 
         self.add_node_to_valid_state(self.next_id, 1000, 10, 0)
-
         self.next_id += 1
-
-        message = {"type": "set up ready", "nodes": self.net_nodes}
-        with open("output.txt", "a") as f:
-            print(message, file=f)
 
         # Broadcast network node info after all nodes have been initialized.
         if len(self.net_nodes) == self.N:
+            # Prepare the "set up "ready" message
+            message = {"type": "set up ready", "nodes": self.net_nodes}
+            with open("output.txt", "a") as f:
+                print(message, file=f)
+            
+            # Broadcast the message
             send_message_broadcast(self.port + 1, message)
             self.local_state = self.valid_state.copy()
             with open("output_bootstrap_states.txt", "a") as f:
-                print(self.wallet.balance, file=f)
                 print(self.net_nodes, file=f)
                 print(self.local_state, file=f)
-                print(self.valid_state, file=f)
-        # send_message(data["node"]["ip"], data["node"]["port"], message)
 
     def node_finish_init(self, data):
+        """
+        Handles a "init_response" message. It:
+            - Sets the node's id.
+            - Copies the received blockchain.
+            - Adds an empty block if the last block is already full.
+        """
         self.set_node_id(data["id"])
         self.blockchain = Blockchain.from_json(data["blockchain"])
-        print(self.id)
+        
         last_block = self.blockchain.chain[-1]
 
         if last_block.is_full():
@@ -466,6 +490,7 @@ class node:
         transaction = Transaction.from_json(data["transaction"])
         if self.validate_transaction(transaction):
             self.blockchain.chain[-1].add_transaction(transaction)
+            # TODO: Perhaps run the transaction before calling mint_block and add emtpy block if needed?
             if self.blockchain.chain[-1].is_full():
                 self.mint_block()
             self.run_transaction(transaction)
@@ -529,10 +554,16 @@ class node:
             print("Block validation failed.")
 
     def handle_client_response(self, host, port, data):
-        print(data["type"])
+        """
+        Handles a received message based on its type:
+            "initialization":           -> Sent by a new node to the bootstrap. The new node advertises itself and the bootstrap updates its network list.
+            "init_response":            -> Bootstrap's response to "initialization message". It sends the next_id and the blockchain to the new node.
+            "set up ready":             -> Broadcast message with info about the ips / ports / public key of each node. Sent when all nodes have communicated with the bootstrap node.
+            "broadcast_transaction":    -> Broadcasts a transaction to all blockchain nodes.
+            "broadcast_block":          -> Broadcasts a block to all blockchain nodes from the validator node.
+        """
         # TODO: The way host & port is handled need to be remade.
         if data["type"] == "initialization":
-            # self.update_and_broadcast_network(data)
             self.send_new_node_info(host, data["node"]["port"], data)
 
         elif data["type"] == "init_response":
@@ -547,7 +578,6 @@ class node:
             print(self.local_state)
             print(self.valid_state)
             self.wallet.print()
-            self.setup_complete = True
             self.process_transaction_queue()
 
         elif data["type"] == "broadcast_transaction":
@@ -568,12 +598,9 @@ class node:
 
                 if not data_received:
                     break
-                # print(data_received)
 
                 data = json.loads(data_received.decode())
                 print(f"Received from {addr}: {data}")
-                # blockchain.add_block(data)
-                # print(data)
                 with open("output_received.txt", "a") as f:
                     print(data, file=f)
 
@@ -677,42 +704,6 @@ class node:
                 20,
             )
         )
-
         return block
 
 
-# TODO: Implement the broadcast method
-def send_message_broadcast(port, data):
-    broadcast_address = (
-        "172.20.255.255"  # Broadcast address for the 172.20.0.0/16 subnet
-    )
-    serialized_data = json.dumps(data).encode()
-
-    with open("output.txt", "a") as f:
-        print(serialized_data, file=f)
-
-    # Create a UDP socket
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-        # Set the option to allow broadcasting
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        # Send the data to the broadcast address
-        sock.sendto(serialized_data, (broadcast_address, port))
-        print(f"Broadcasted message to {broadcast_address}:{port}")
-        with open("output.txt", "a") as f:
-            print(f"Broadcasted message to {broadcast_address}:{port}", file=f)
-    return
-
-
-def send_message(host, port, data):
-    """
-    Sends a message to a specific host and port.
-    """
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
-            client_socket.connect((host, port))
-            print(f"Connected to {host}:{port}")
-            client_socket.sendall(json.dumps(data).encode())
-            # print(f"JSON data sent: {json.dumps(data).encode()}")
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
