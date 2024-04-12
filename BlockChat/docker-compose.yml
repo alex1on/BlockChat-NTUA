@@ -22,7 +22,6 @@ services:
     networks:
       - blockchain_network
 
-
 networks:
   blockchain_network:
     driver: bridge
