@@ -684,6 +684,7 @@ class node:
                     break
                 thread = threading.Thread(
                     target=self.handle_client, args=(conn, addr, type)
+                    target=self.handle_client, args=(conn, addr, type)
                 )
                 thread.start()
                 self.threads.append(thread)
