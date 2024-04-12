@@ -58,7 +58,7 @@ class node:
         self.server_socket = None
         self.threads = []
         self.running = True
-        self.open_connection("127.0.0.1", 3000, 'cli') # listen to cli
+        self.open_connection("127.0.0.1", 3001, 'cli') # listen to cli
         self.open_connection("0.0.0.0", port, 'client')
         self.open_connection_broadcast("0.0.0.0", port + 1)
 
@@ -147,11 +147,13 @@ class node:
             return
         if self.id == receiver:
             raise Exception("Recipient can't be the sender.")
-        if amount is not None and amount <= 0:
+        if amount is None or amount <= 0:
             raise Exception("Invalid Transaction: Amount can't be negative or zero.")
 
         # Find the receiver node details
         receiver_node = self.net_nodes[receiver]
+        if receiver_node is None:
+            raise Exception("Invalid Transaction: Receiver not found!")
 
         nonce = self.wallet.nonce
 
@@ -164,6 +166,8 @@ class node:
             amount,
             message,
         )
+        with open("transaction.txt", "a") as f:
+            print(transaction.amount, file=f)
 
         # Update the nonce for the transaction
         self.wallet.increment_nonce()
@@ -628,7 +632,7 @@ class node:
         """
         if data["type"] == "transaction":
             if data["transaction_type"] == "coin":
-                handle_coin_transaction(conn, self, data["recipient_address"], data["message"])
+                handle_coin_transaction(conn, self, data["recipient_address"], data["amount"])
             else:
                 handle_message_transaction(conn, self, data["recipient_address"], data["message"] )
         elif data["type"] == "stake":
@@ -683,7 +687,6 @@ class node:
                 if not self.running:
                     break
                 thread = threading.Thread(
-                    target=self.handle_client, args=(conn, addr, type)
                     target=self.handle_client, args=(conn, addr, type)
                 )
                 thread.start()

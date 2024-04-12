@@ -45,7 +45,9 @@ class Client:
         try:
             self.socket.sendall(json.dumps(message).encode('utf-8'))
             response = self.socket.recv(32768).decode('utf-8')
-            print("Server response:", response)
+            with open("response.txt", "a") as f:
+                print(response, file=f)
+            print(response)
         except Exception as e:
             print("Failed to send message: ", e)
 
@@ -58,6 +60,9 @@ class Client:
             amount (int, optional): The amount of coins to be transferred, for coin transactions.
             message (str, optional): The message for message transactions.
         """
+        with open("transaction.txt", "a") as f:
+            print(amount, file=f)
+            print(recipient_address, file=f)
         transaction_type = 'coin' if amount is not None else 'message'
         self.send_message({
             "type": "transaction",
@@ -94,6 +99,18 @@ class Client:
         self.send_message({
             "type": "view"
         })
+    
+    def help(self):
+        print("""
+            Available commands:
+            t <recipient_address> <amount> - Transfer amount of BTC coins to recipient_address.
+            t <recipient_address> <message> - Send a message to recipient_address.
+            stake <amount> - Stake amount of coins for proof of stake.
+            view - View transactions in the last block.
+            balance - Show wallet balance.
+            help - Show this help message.
+        """)
+
 
     def close_connection(self):
         """
@@ -123,8 +140,13 @@ def main():
                 client.check_balance()
             elif args[0] == 'view':
                 client.view_block()
+            elif args[0] == 'help':
+                client.help()
+            elif args[0] == 'exit':
+                break
             else:
                 print("Invalid command")
+                client.help()
     finally:
         client.close_connection()
 

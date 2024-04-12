@@ -3,6 +3,8 @@ services:
   bootstrap_node:
     build: .
     command: python ./start_bootstrap.py
+    ports:
+    - "3001:3001"
     networks:
       - blockchain_network
 

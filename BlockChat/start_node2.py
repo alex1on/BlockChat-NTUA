@@ -17,6 +17,7 @@ hostname = socket.gethostname()
 ip_address = socket.gethostbyname(hostname)
 print(ip_address)
 
+time.sleep(2)
 # node_instance = node(f"simple_node{suffix}", port, 3)
 node_instance = node(ip_address, port, 3, 3)
 
