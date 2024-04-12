@@ -1,24 +1,30 @@
-version: '3'
+version: '3.8'
 services:
   bootstrap_node:
     build: .
-    command: python ./start_bootstrap.py
+    environment:
+      - NODE_PORT=5001
+      - NODE_TYPE=bootstrap
     ports:
-    - "3001:3001"
+      - "5001:5001"
     networks:
       - blockchain_network
 
   simple_node1:
     build: .
-    command: python ./start_node.py 5001
+    environment:
+      - NODE_PORT=5002
+      - NODE_TYPE=node
     depends_on:
       - bootstrap_node
     networks:
       - blockchain_network
-  
+
   simple_node2:
     build: .
-    command: python ./start_node2.py 5001
+    environment:
+      - NODE_PORT=5003
+      - NODE_TYPE=node
     depends_on:
       - bootstrap_node
     networks:

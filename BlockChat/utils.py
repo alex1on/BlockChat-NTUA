@@ -67,7 +67,7 @@ def send_message(host, port, data):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             client_socket.connect((host, port))
             print(f"Connected to {host}:{port}")
-            client_socket.sendall(json.dumps(data).encode())
+            client_socket.sendall(json.dumps(data).encode('utf-8'))
 
     except Exception as e:
         print(f"An error occurred: {e}")

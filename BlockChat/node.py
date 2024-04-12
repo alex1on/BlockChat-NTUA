@@ -60,7 +60,7 @@ class node:
         self.running = True
         self.open_connection("127.0.0.1", 3001, 'cli') # listen to cli
         self.open_connection("0.0.0.0", port, 'client')
-        self.open_connection_broadcast("0.0.0.0", port + 1)
+        # self.open_connection_broadcast("0.0.0.0", port + 1)
 
     def set_node_id(self, id):
         """
@@ -294,7 +294,9 @@ class node:
         }
         # send_message(receiver_node["ip"], receiver_node["port"], message)
         print(receiver_node["port"] + 1)
-        send_message_broadcast(receiver_node["port"] + 1, message)
+        for node_info in self.net_nodes:
+            send_message(node_info['ip'], node_info['port'], message)
+        # send_message_broadcast(receiver_node["port"] + 1, message)
 
     def process_transaction_queue(self):
         for transaction in self.transaction_queue:
@@ -313,7 +315,9 @@ class node:
             message = {"type": "broadcast_block", "block": block.to_json()}
 
         # send_message(receiver_node["ip"], receiver_node["port"], message)
-        send_message_broadcast(port, message)
+        for node_info in self.net_nodes:
+            send_message(node_info['ip'], node_info['port'], message)
+        # send_message_broadcast(port, message)
 
     def stake(self, amount):
         """
@@ -495,8 +499,12 @@ class node:
                 print(message, file=f)
             
             # Broadcast the message
-            send_message_broadcast(self.port + 1, message)
+            for node_info in self.net_nodes:
+                send_message(node_info['ip'], node_info['port'], message)
+            # send_message_broadcast(self.port + 1, message)
             self.local_state = self.valid_state.copy()
+            empty_block = self.blockchain.empty_block()
+            self.blockchain.add_block(empty_block)
             with open("output_bootstrap_states.txt", "a") as f:
                 print(self.net_nodes, file=f)
                 print(self.local_state, file=f)

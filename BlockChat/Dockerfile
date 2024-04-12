@@ -1,14 +1,21 @@
-FROM python:3.12
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
 
+# Set the working directory in the container
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt ./
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
-COPY . .
+# Make port 5001 available to the world outside this container
+EXPOSE 5001
 
-ENV DOCKER_ENV=1
+# Define environment variable
+ENV NODE_PORT=5001
+ENV NODE_TYPE=node
 
-CMD ["python", "./client.py", "node", "0.0.0.0", "5000", "3"]
+# Run start_node.py when the container launches
+CMD ["python", "start_node.py", "${NODE_PORT}", "${NODE_TYPE}"]
