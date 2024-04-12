@@ -102,7 +102,7 @@ class Client:
         self.socket.close()
 
 def main():
-    client = Client('localhost', 3000)
+    client = Client('localhost', 3001)
     try:
         while True:
             command = input("Enter command (type 'exit' to quit): ").strip()

@@ -659,7 +659,7 @@ class node:
                 if type == 'client':
                     self.handle_client_response(addr[0], addr[1], data)
                 else:
-                    self.handle_cli_response(addr[0], addr[1], data)
+                    self.handle_cli_response(data)
 
     def server(self, host, port, blockchain, type):
         """
@@ -682,7 +682,7 @@ class node:
                 if not self.running:
                     break
                 thread = threading.Thread(
-                    target=self.handle_client, args=(conn, addr, blockchain, type)
+                    target=self.handle_client, args=(conn, addr, type)
                 )
                 thread.start()
                 self.threads.append(thread)

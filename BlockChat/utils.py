@@ -95,25 +95,22 @@ def handle_coin_transaction(node, recipient_address, amount):
             "type": "fail_transaction",
             "error": e
         }
-    send_message("localhost", 3000, message)
-        
-def handle_message_transaction(node, recipient_address, message):
-    """
-    Handles creating and processing a message transaction.
-    """
-    print(f"Sending message to {recipient_address}: {message}")
-    message = {
+    send_message("localhost", 3001, message)
+
+def handle_message_transaction(node, recipient_address, transaction_message):
+    print(f"Sending message to {recipient_address}: {transaction_message}")
+    message_payload = {
         "type": "valid_transaction"
     }
     try:
-        node.create_transaction('message', None, message, recipient_address)
+        node.create_transaction('message', None, transaction_message, recipient_address)
     except Exception as e:
-        message = {
+        message_payload = {
             "type": "fail_transaction",
-            "error": e
+            "error": str(e)
         }
-    send_message("localhost", 3000, message)
-    
+    send_message("localhost", 3001, message_payload)
+
 def handle_stake(node, amount):
     """
     Handles stake amount command from cli.
@@ -129,7 +126,7 @@ def handle_stake(node, amount):
             "type": "fail_staking",
             "error": e
         }
-    send_message("localhost", 3000, message)
+    send_message("localhost", 3001, message)
     
 def handle_balance(node):
     """
@@ -138,10 +135,10 @@ def handle_balance(node):
     message = {
         "amount": node.wallet.balance
     }
-    send_message("localhost", 3000, message)
+    send_message("localhost", 3001, message)
 
 def handle_view(node):
     """
     Handles view command from cli.
     """
-    send_message("localhost", 3000, node.view_block())
+    send_message("localhost", 3001, node.view_block())
