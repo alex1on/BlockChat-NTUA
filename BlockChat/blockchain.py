@@ -1,7 +1,6 @@
 import json
 from block import BlockChatCoinBlock
 from transaction import Transaction
-from wallet import Wallet
 
 
 class Blockchain:
@@ -56,7 +55,7 @@ class Blockchain:
         """
         blockchain_dict = {
             "chain": [json.loads(block.to_json()) for block in self.chain],
-            "block_capacity" : self.block_capacity
+            "block_capacity": self.block_capacity,
         }
         return json.dumps(blockchain_dict)
 

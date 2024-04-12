@@ -100,7 +100,7 @@ class Transaction:
         """
         if self.sender_address == self.receiver_address:
             return self.amount
-        return self.amount * 1.03 if self.amount else len(self.message)
+        return self.amount * 1.03 if self.amount else len(self.message) if self.message else 0
 
     def sign_transaction(self, private_key):
         """

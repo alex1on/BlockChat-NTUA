@@ -1,5 +1,3 @@
-from transaction import Transaction
-
 class Wallet:
     """
     Class that represents a BlockChat Wallet.
