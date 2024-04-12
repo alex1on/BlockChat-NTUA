@@ -67,3 +67,81 @@ def send_message(host, port, data):
 
     except Exception as e:
         print(f"An error occurred: {e}")
+
+
+def print_help():
+    print("""
+        Available commands:
+        t <recipient_address> <amount> - Transfer amount of BTC coins to recipient_address.
+        t <recipient_address> <message> - Send a message to recipient_address.
+        stake <amount> - Stake amount of coins for proof of stake.
+        view - View transactions in the last block.
+        balance - Show wallet balance.
+        help - Show this help message.
+    """)
+    
+def handle_coin_transaction(node, recipient_address, amount):
+    """
+    Handles creating and processing a coin transaction through cli.
+    """
+    print(f"Creating coin transaction: {amount} to {recipient_address}")
+    message = {
+        "type": "valid_transaction"
+    }
+    try:
+        node.create_transaction('coins', amount, None, recipient_address)
+    except Exception as e:
+        message = {
+            "type": "fail_transaction",
+            "error": e
+        }
+    send_message("localhost", 3000, message)
+        
+def handle_message_transaction(node, recipient_address, message):
+    """
+    Handles creating and processing a message transaction.
+    """
+    print(f"Sending message to {recipient_address}: {message}")
+    message = {
+        "type": "valid_transaction"
+    }
+    try:
+        node.create_transaction('message', None, message, recipient_address)
+    except Exception as e:
+        message = {
+            "type": "fail_transaction",
+            "error": e
+        }
+    send_message("localhost", 3000, message)
+    
+def handle_stake(node, amount):
+    """
+    Handles stake amount command from cli.
+    """
+    print(f"Staking {amount}...")
+    message = {
+        "type": "valid_staking"
+    }
+    try:
+        node.stake(amount)
+    except Exception as e:
+        message = {
+            "type": "fail_staking",
+            "error": e
+        }
+    send_message("localhost", 3000, message)
+    
+def handle_balance(node):
+    """
+    Handles balance command from cli.
+    """
+    message = {
+        "amount": node.wallet.balance
+    }
+    send_message("localhost", 3000, message)
+
+def handle_view(node):
+    """
+    Handles view command from cli.
+    """
+    send_message("localhost", 3000, node.view_block())

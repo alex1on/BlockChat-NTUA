@@ -9,7 +9,7 @@ import json
 from blockchain import Blockchain
 from transaction import Transaction
 from block import BlockChatCoinBlock
-from utils import generate_wallet, add_transactions_to_wallet, send_message, send_message_broadcast
+from utils import *
 
 
 class node:
@@ -58,7 +58,8 @@ class node:
         self.server_socket = None
         self.threads = []
         self.running = True
-        self.open_connection("0.0.0.0", port)
+        self.open_connection("localhost", 3000, 'cli') # listen to cli
+        self.open_connection("0.0.0.0", port, 'client')
         self.open_connection_broadcast("0.0.0.0", port + 1)
 
     def set_node_id(self, id):
@@ -410,8 +411,7 @@ class node:
 
     def view_block(self):
         """
-        Finds the most recently validated block where the validator is not None and prints its transactions
-        and the id of its validator.
+        Finds the most recently validated block and returns it's json representation.
         """
         validated_block = None
         for block in reversed(self.blockchain.chain):
@@ -420,18 +420,21 @@ class node:
                 break
 
         if validated_block is None:
-            print("No validated blocks found.")
-            return
+            return { "type": "not_found_block"}
 
-        validator = RSA.import_key(validated_block.validator)
-        validator_index = self.find_index(validator, 'node')
-        validator_id = self.net_nodes[validator_index]["id"]
+        return {
+            "type": "found_block",
+            "block": validated_block.to_json()
+        }
+        # validator = RSA.import_key(validated_block.validator)
+        # validator_index = self.find_index(validator, 'node')
+        # validator_id = self.net_nodes[validator_index]["id"]
 
-        print("Last validated block info:")
-        print("Transactions:")
-        for transaction in validated_block.transactions:
-            transaction.print()
-        print("Validator id: ", validator_id)
+        # print("Last validated block info:")
+        # print("Transactions:")
+        # for transaction in validated_block.transactions:
+        #     transaction.print()
+        # print("Validator id: ", validator_id)
 
     ###############
     ### Below here are functions regarding network connectivity between nodes ###
@@ -607,9 +610,6 @@ class node:
 
         elif data["type"] == "set up ready":
             self.finish_setup(data)
-            # print(json.dumps(self.net_nodes, sort_keys=True, indent=4))
-            # print(json.dumps(self.local_state, sort_keys=True, indent=4))
-            # print(json.dumps(self.valid_state, sort_keys=True, indent=4))
             print(self.net_nodes)
             print(self.local_state)
             print(self.valid_state)
@@ -622,7 +622,23 @@ class node:
         elif data["type"] == "broadcast_block":
             self.handle_new_block(data)
 
-    def handle_client(self, conn, addr, blockchain):
+    def handle_cli_response(self, data):
+        """
+        Handles cli's requests.
+        """
+        if data["type"] == "transaction":
+            if data["transaction_type"] == "coin":
+                handle_coin_transaction(self, data["recipient_address"], data["message"])
+            else:
+                handle_message_transaction(self, data["recipient_address"], data["message"] )
+        elif data["type"] == "stake":
+            handle_stake(self, data["amount"])
+        elif data["type"] == "balance":
+            handle_balance(self)
+        elif data["type"] == "view":
+            handle_view(self)
+
+    def handle_client(self, conn, addr, type):
         """
         Handles an incoming client connection.
         """
@@ -640,11 +656,12 @@ class node:
                     print(data, file=f)
 
                 # TODO: The way it works right now is not ideal. Fix inc.
-                self.handle_client_response(addr[0], addr[1], data)
+                if type == 'client':
+                    self.handle_client_response(addr[0], addr[1], data)
+                else:
+                    self.handle_cli_response(addr[0], addr[1], data)
 
-        # print(f"Current Blockchain: {blockchain.chain}")
-
-    def node_server(self, host, port, blockchain):
+    def server(self, host, port, blockchain, type):
         """
         Runs the server that listens for incoming connections and handles incoming data.
         """
@@ -665,14 +682,23 @@ class node:
                 if not self.running:
                     break
                 thread = threading.Thread(
-                    target=self.handle_client, args=(conn, addr, blockchain)
+                    target=self.handle_client, args=(conn, addr, blockchain, type)
                 )
                 thread.start()
                 self.threads.append(thread)
 
-    def open_connection(self, host, port):
+    def open_cli_connection(self, host, port):
+        """
+        Opens a connection in order to listen to cli commands.
+        """
         server_thread = threading.Thread(
-            target=self.node_server, args=(host, port, self.blockchain)
+            target = self.cli_server, args=(host, port)
+        )
+        server_thread.start()
+
+    def open_connection(self, host, port, type):
+        server_thread = threading.Thread(
+            target=self.server, args=(host, port, self.blockchain, type)
         )
         server_thread.start()
 
