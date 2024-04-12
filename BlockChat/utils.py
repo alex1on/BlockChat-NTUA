@@ -6,16 +6,18 @@ from transaction import Transaction
 from block import BlockChatCoinBlock
 from blockchain import Blockchain
 
+
 def generate_wallet():
     """
     Creates a new wallet.
     """
     key = RSA.generate(2048)
-    
+
     private_key = key
     public_key = key.publickey()
-    
+
     return Wallet(public_key, private_key)
+
 
 def add_transactions_to_wallet(wallet, transactions):
     """
@@ -26,10 +28,13 @@ def add_transactions_to_wallet(wallet, transactions):
         transactions (list): A list of Transaction objects.
     """
     for transaction in transactions:
-        if transaction.sender_address == wallet.public_key or transaction.receiver_address == wallet.public_key:
+        if (
+            transaction.sender_address == wallet.public_key
+            or transaction.receiver_address == wallet.public_key
+        ):
             wallet.transactions.append(transaction)
-            
-            
+
+
 def send_message_broadcast(port, data):
     """
     Broadcast a message in the networks (subnet's) broadcast address.
@@ -79,69 +84,66 @@ def print_help():
         balance - Show wallet balance.
         help - Show this help message.
     """)
-    
-def handle_coin_transaction(node, recipient_address, amount):
+
+
+def handle_coin_transaction(conn, node, recipient_address, amount):
     """
     Handles creating and processing a coin transaction through cli.
     """
     print(f"Creating coin transaction: {amount} to {recipient_address}")
-    message = {
-        "type": "valid_transaction"
-    }
+    message = {"type": "valid_transaction"}
     try:
-        node.create_transaction('coins', amount, None, recipient_address)
+        node.create_transaction("coins", amount, None, recipient_address)
     except Exception as e:
-        message = {
-            "type": "fail_transaction",
-            "error": e
-        }
-    send_message("localhost", 3000, message)
-        
-def handle_message_transaction(node, recipient_address, message):
+        message = {"type": "fail_transaction", "error": str(e)}
+    # send_message("localhost", 3000, message)
+    send_cli_response(conn, message)
+
+
+def handle_message_transaction(conn, node, recipient_address, message):
     """
     Handles creating and processing a message transaction.
     """
     print(f"Sending message to {recipient_address}: {message}")
-    message = {
-        "type": "valid_transaction"
-    }
+    message = {"type": "valid_transaction"}
     try:
-        node.create_transaction('message', None, message, recipient_address)
+        node.create_transaction("message", None, message, recipient_address)
     except Exception as e:
-        message = {
-            "type": "fail_transaction",
-            "error": e
-        }
-    send_message("localhost", 3000, message)
-    
-def handle_stake(node, amount):
+        message = {"type": "fail_transaction", "error": str(e)}
+        # send_message("localhost", 3000, message)
+    send_cli_response(conn, message)
+
+
+def handle_stake(conn, node, amount):
     """
     Handles stake amount command from cli.
     """
     print(f"Staking {amount}...")
-    message = {
-        "type": "valid_staking"
-    }
+    message = {"type": "valid_staking"}
     try:
         node.stake(amount)
     except Exception as e:
-        message = {
-            "type": "fail_staking",
-            "error": e
-        }
-    send_message("localhost", 3000, message)
-    
-def handle_balance(node):
+        message = {"type": "fail_staking", "error": str(e)}
+        # send_message("localhost", 3000, message)
+    send_cli_response(conn, message)
+
+
+def handle_balance(conn, node):
     """
     Handles balance command from cli.
     """
-    message = {
-        "amount": node.wallet.balance
-    }
-    send_message("localhost", 3000, message)
+    message = {"amount": node.wallet.balance}
+    # send_message("localhost", 3000, message)
+    send_cli_response(conn, message)
 
-def handle_view(node):
+
+def handle_view(conn, node):
     """
     Handles view command from cli.
     """
-    send_message("localhost", 3000, node.view_block())
+    # send_message("localhost", 3000, node.view_block())
+    send_cli_response(conn, node.view_block())
+
+
+def send_cli_response(conn, data):
+    conn.sendall(json.dumps(data).encode())

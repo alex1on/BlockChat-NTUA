@@ -58,7 +58,7 @@ class node:
         self.server_socket = None
         self.threads = []
         self.running = True
-        self.open_connection("localhost", 3000, 'cli') # listen to cli
+        self.open_connection("127.0.0.1", 3000, 'cli') # listen to cli
         self.open_connection("0.0.0.0", port, 'client')
         self.open_connection_broadcast("0.0.0.0", port + 1)
 
@@ -622,21 +622,21 @@ class node:
         elif data["type"] == "broadcast_block":
             self.handle_new_block(data)
 
-    def handle_cli_response(self, data):
+    def handle_cli_response(self, conn, data):
         """
         Handles cli's requests.
         """
         if data["type"] == "transaction":
             if data["transaction_type"] == "coin":
-                handle_coin_transaction(self, data["recipient_address"], data["message"])
+                handle_coin_transaction(conn, self, data["recipient_address"], data["message"])
             else:
-                handle_message_transaction(self, data["recipient_address"], data["message"] )
+                handle_message_transaction(conn, self, data["recipient_address"], data["message"] )
         elif data["type"] == "stake":
-            handle_stake(self, data["amount"])
+            handle_stake(conn, self, data["amount"])
         elif data["type"] == "balance":
-            handle_balance(self)
+            handle_balance(conn, self)
         elif data["type"] == "view":
-            handle_view(self)
+            handle_view(conn, self)
 
     def handle_client(self, conn, addr, type):
         """
@@ -653,13 +653,14 @@ class node:
                 data = json.loads(data_received.decode())
                 print(f"Received from {addr}: {data}")
                 with open("output_received.txt", "a") as f:
+                    print(type, file=f)
                     print(data, file=f)
 
                 # TODO: The way it works right now is not ideal. Fix inc.
                 if type == 'client':
                     self.handle_client_response(addr[0], addr[1], data)
                 else:
-                    self.handle_cli_response(addr[0], addr[1], data)
+                    self.handle_cli_response(conn, data)
 
     def server(self, host, port, blockchain, type):
         """
@@ -682,19 +683,19 @@ class node:
                 if not self.running:
                     break
                 thread = threading.Thread(
-                    target=self.handle_client, args=(conn, addr, blockchain, type)
+                    target=self.handle_client, args=(conn, addr, type)
                 )
                 thread.start()
                 self.threads.append(thread)
 
-    def open_cli_connection(self, host, port):
-        """
-        Opens a connection in order to listen to cli commands.
-        """
-        server_thread = threading.Thread(
-            target = self.cli_server, args=(host, port)
-        )
-        server_thread.start()
+    # def open_cli_connection(self, host, port):
+    #     """
+    #     Opens a connection in order to listen to cli commands.
+    #     """
+    #     server_thread = threading.Thread(
+    #         target = self.server, args=(host, port)
+    #     )
+    #     server_thread.start()
 
     def open_connection(self, host, port, type):
         server_thread = threading.Thread(
