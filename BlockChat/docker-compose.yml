@@ -2,32 +2,29 @@ version: '3'
 services:
   bootstrap_node:
     build: .
-    command: ["python", "client.py", "bootstrap", "0.0.0.0", "5000", "3"]
-    ports:
-      - "5001:5000"
+    command: python ./start_bootstrap.py
     networks:
       - blockchain_network
 
   simple_node1:
     build: .
-    command: ["python", "client.py", "node", "0.0.0.0", "5001", "3"]
+    command: python ./start_node.py 5001
     depends_on:
       - bootstrap_node
-    ports:
-      - "5002:5001"
     networks:
       - blockchain_network
   
   simple_node2:
     build: .
-    command: ["python", "client.py", "node", "0.0.0.0", "5002", "3"]
+    command: python ./start_node2.py 5001
     depends_on:
       - bootstrap_node
-    ports:
-      - "5003:5002"
     networks:
       - blockchain_network
 
 networks:
   blockchain_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

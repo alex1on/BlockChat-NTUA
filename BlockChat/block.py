@@ -23,9 +23,9 @@ class BlockChatCoinBlock:
         self.timestamp = time.time()
         self.transactions = transactions
         self.validator = validator.export_key(format='PEM').decode() if validator else None
-        self.hash = self.compute_hash()
         self.previous_hash = previous_hash
         self.capacity = capacity
+        self.hash = self.compute_hash()
 
     def compute_hash(self):
         """
@@ -33,7 +33,7 @@ class BlockChatCoinBlock:
         """
         # exclude hash for validation purposes
         self_string = json.dumps( # TODO: transactions is excludes as it cannot be serialized
-            {k: v for k, v in self.__dict__.items() if k != "hash" and k != "transactions"}, sort_keys=True
+            {k: v for k, v in self.__dict__.items() if k != "hash" and k != "transactions" and k!= "validator"}, sort_keys=True
         )
         return hashlib.sha256(self_string.encode()).hexdigest()
 
@@ -55,9 +55,13 @@ class BlockChatCoinBlock:
             return False
         
         # b) Check the previous hash
+        print("self ->", self.previous_hash)
+        print("prev ->", prev_block.hash)
         if self.previous_hash != prev_block.hash:
             print("Previous block's hash doesn't match with current block's previous hash")
             return False
+        
+        print("Block validated!")
 
         return True
     
@@ -70,7 +74,7 @@ class BlockChatCoinBlock:
     def is_full(self):
         """
         Returns True if the block is full.
-        """
+        # """
         if self.capacity < len(self.transactions):
             raise ValueError("Total capacity exceeded! This shouldn't happen!")
         return self.capacity == len(self.transactions)
@@ -96,7 +100,7 @@ class BlockChatCoinBlock:
             "index": self.index,
             "timestamp": self.timestamp,
             "transactions": [json.loads(t.to_json()) for t in self.transactions],
-            "validator": self.validator,
+            "validator": self.validator.export_key("PEM").decode() if self.validator is not None else None,
             "hash": self.hash,
             "previous_hash": self.previous_hash,
             "capacity": self.capacity
@@ -130,6 +134,7 @@ class BlockChatCoinBlock:
             "%Y-%m-%d %H:%M:%S"
         )
         print(f"Block Index: {self.index}")
+        print(f"Capacity: {self.capacity}")
         print(f"Timestamp: {readable_timestamp}")
         for transaction in self.transactions:
             print("Transaction: ")
