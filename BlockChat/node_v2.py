@@ -322,17 +322,18 @@ class node:
             last_block_hash = self.blockchain.chain[-1].previous_hash
             random.seed(int(hashlib.sha256(last_block_hash.encode()).hexdigest(), 16))
 
-            # Create a list of tuples (public_key, stake) for all states that have a stake
+            # Create a list of tuples (index, stake) for all states that have a stake
             stakes = [
-                (state["public_key"], state["stake"])
-                for state in self.local_state
+                (index, state["stake"])
+                for index, state in enumerate(self.local_state)
                 if state["stake"] > 0
             ]
             if stakes:
                 # Flatten the list to simulate a lottery: each "ticket" is an entry in the list
-                lottery_pool = [pk for pk, stake in stakes for _ in range(stake)]
+                lottery_pool = [index for index, stake in stakes for _ in range(stake)]
                 # Randomly select a "ticket" (public_key)
-                selected_validator_public_key = random.choice(lottery_pool)
+                selected_validator_index = random.choice(lottery_pool)
+                selected_validator_public_key = self.net_nodes[selected_validator_index]["public_key"]
                 print("Selected validator ->", selected_validator_public_key)
                 return selected_validator_public_key
         return None
