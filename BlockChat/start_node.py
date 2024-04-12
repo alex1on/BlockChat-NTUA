@@ -18,7 +18,7 @@ ip_address = socket.gethostbyname(hostname)
 print(ip_address)
 
 # node_instance = node(f"simple_node{suffix}", port, 3)
-node_instance = node(ip_address, port, 3)
+node_instance = node(ip_address, port, 3, 3)
 
 signal.signal(signal.SIGINT, node_instance.signal_handler)
 time.sleep(2)
