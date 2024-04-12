@@ -1,0 +1,43 @@
+[
+    {
+        "type": "initialization",
+        "__description": "sent from a new node to the bootstrap",
+        "node": {
+            "ip": "ip",
+            "port": "port",
+            "public": "public"
+        }
+    },
+
+    {
+        "type": "init_response",
+        "__description": "response to the init message. sent from the bootstrap node to the newly created node",
+        "node": "id"
+    },
+
+    {
+        "type": "set up ready",
+        "__description": "broadcast message with info about the ips / ports / public key of each node. sent when all nodes have communicated with the bootstrap node",
+        "nodes": [
+            { 
+                "id": "id",
+                "ip": "ip",
+                "port": "port",
+                "public key": "public key",
+                "blockchain": "blockchain"
+            }
+        ]
+    },
+
+    {
+        "type": "broadcast_transaction",
+        "__description": "broadcast transaction to all blockchain nodes",
+        "transaction": "transaction"
+    },
+
+    {
+        "type": "broadcast_block",
+        "__description": "broadcast block to all blockchain nodes from the validator node",
+        "block": "block"
+    }
+]

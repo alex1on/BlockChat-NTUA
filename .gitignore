@@ -1,3 +1,5 @@
+.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -160,3 +162,5 @@ cython_debug/
 #.idea/
 
 .DS_Store
+
+WebApp/blockchat/node_modules
