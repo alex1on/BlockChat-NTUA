@@ -3,7 +3,6 @@ from Crypto.Hash import SHA256
 from Crypto.Signature import pss
 from Crypto.PublicKey import RSA
 
-
 class Transaction:
     """
     Class that represents a BlockChat Transaction.

@@ -1,4 +1,6 @@
 from Crypto.PublicKey import RSA
+import contextlib
+import io
 import hashlib
 import random
 import socket
@@ -51,7 +53,11 @@ class node:
             self.bootstraps()
             self.setup_complete = True
         else:
-            self.advertise_node("bootstrap_node", 5001)
+            # Get the container's hostname (which is also the container's name within the Docker network)
+            hostname = "bootstrap_node"
+            # Resolve the hostname to an IP address
+            ip_address = socket.gethostbyname(hostname)
+            self.advertise_node(ip_address, 5001)
 
         self.server_socket = None
         self.threads = []
@@ -213,7 +219,7 @@ class node:
 
         Args:
             public_key (RSA key): The public key to search for.
-           
+
         Returns:
             int: The index of the node's information if found.
 
@@ -277,6 +283,7 @@ class node:
             "transaction": transaction.to_json(),
         }
         # send_message(receiver_node["ip"], receiver_node["port"], message)
+        print(receiver_node["port"] + 1)
         send_message_broadcast(receiver_node["port"] + 1, message)
 
     def process_transaction_queue(self):
@@ -333,7 +340,9 @@ class node:
                 lottery_pool = [index for index, stake in stakes for _ in range(stake)]
                 # Randomly select a "ticket" (public_key)
                 selected_validator_index = random.choice(lottery_pool)
-                selected_validator_public_key = self.net_nodes[selected_validator_index]["public_key"]
+                selected_validator_public_key = self.net_nodes[
+                    selected_validator_index
+                ]["public_key"]
                 print("Selected validator ->", selected_validator_public_key)
                 return selected_validator_public_key
         return None
@@ -466,9 +475,13 @@ class node:
         transaction = Transaction.from_json(data["transaction"])
         if self.validate_transaction(transaction):
             self.blockchain.chain[-1].add_transaction(transaction)
+            with open("blockchain.txt", "a") as f:
+                with contextlib.redirect_stdout(f):
+                    self.blockchain.print()
             if self.blockchain.chain[-1].is_full():
                 self.mint_block()
             self.run_transaction(transaction)
+
 
     def handle_new_block(self, data):
         """
@@ -531,6 +544,8 @@ class node:
     def handle_client_response(self, host, port, data):
         print(data["type"])
         # TODO: The way host & port is handled need to be remade.
+        if host == self.ip:
+            return
         if data["type"] == "initialization":
             # self.update_and_broadcast_network(data)
             self.send_new_node_info(host, data["node"]["port"], data)
@@ -622,7 +637,10 @@ class node:
         # Enable broadcasting mode
         self.udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.udp_socket.bind((host, port))
-        print(f"Node listening for UDP messages on port {port}")
+        if self.bootstrap:
+            print(f"Bootstrap listening for UDP messages on port {host}:{port}")
+        else:
+            print(f"Node listening for UDP messages on port {host}:{port}")
         # Start listening in a new thread
         threading.Thread(target=self.listen_for_udp_messages, daemon=True).start()
 
@@ -635,6 +653,8 @@ class node:
                 )  # Adjust buffer size as needed
                 if data:
                     message_data = json.loads(data.decode())
+                    with open("udp.txt", "a") as f:
+                        print(f"Received message from {addr}: {message_data}", file=f)
                     print(f"Received message from {addr}: {message_data}")
                     # Process the message
                     self.handle_client_response(addr[0], addr[1], message_data)
