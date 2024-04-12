@@ -13,7 +13,7 @@ services:
   simple_node1:
     build: .
     environment:
-      - NODE_PORT=5002
+      - NODE_PORT=5003
       - NODE_TYPE=node
     depends_on:
       - bootstrap_node
@@ -23,7 +23,7 @@ services:
   simple_node2:
     build: .
     environment:
-      - NODE_PORT=5003
+      - NODE_PORT=5005
       - NODE_TYPE=node
     depends_on:
       - bootstrap_node

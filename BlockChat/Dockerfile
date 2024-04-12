@@ -13,9 +13,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Make port 5001 available to the world outside this container
 EXPOSE 5001
 
-# Define environment variable
-ENV NODE_PORT=5001
-ENV NODE_TYPE=node
-
 # Run start_node.py when the container launches
 CMD ["python", "start_node.py", "${NODE_PORT}", "${NODE_TYPE}"]

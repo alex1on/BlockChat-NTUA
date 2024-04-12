@@ -45,6 +45,13 @@ class node:
 
         self.setup_complete = False
         self.transaction_queue = []
+        
+        self.server_socket = None
+        self.threads = []
+        self.running = True
+        self.open_connection("0.0.0.0", 3001, 'cli') # listen to cli
+        self.open_connection("0.0.0.0", port, 'client')
+        # self.open_connection_broadcast("0.0.0.0", port + 1)
 
         if self.bootstrap:
             self.bootstraps()
@@ -54,13 +61,6 @@ class node:
             # Resolve the hostname to an IP address
             ip_address = socket.gethostbyname(hostname)
             self.advertise_node(ip_address, 5001)
-
-        self.server_socket = None
-        self.threads = []
-        self.running = True
-        self.open_connection("127.0.0.1", 3001, 'cli') # listen to cli
-        self.open_connection("0.0.0.0", port, 'client')
-        # self.open_connection_broadcast("0.0.0.0", port + 1)
 
     def set_node_id(self, id):
         """
@@ -400,18 +400,18 @@ class node:
 
             # Update the global state
             self.valid_state = self.local_state.copy()
-
+            
             # Broadcast the validated block to the network
             self.broadcast_block(self.blockchain.chain[-1])
+            
+            # Add an empty block
+            self.blockchain.add_block(self.blockchain.empty_block())
 
             # Add transactions related to this node's wallet
             add_transactions_to_wallet(self.wallet, candidate_block.transactions)
 
             # Update wallet's balance
             self.wallet.wallet_balance()
-
-            # Add an empty block
-            self.blockchain.add_block(self.blockchain.empty_block())
 
             print("Block minted and broadcasted successfully.")
         else:
